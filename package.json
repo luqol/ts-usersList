@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@types/inquirer": "^9.0.7",
+    "consola": "^3.2.3",
     "typescript": "^5.4.5"
   }
 }
