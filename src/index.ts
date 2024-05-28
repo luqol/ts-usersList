@@ -5,11 +5,8 @@ enum Action {
   List = "list",
   Add = "add",
   Remove = "remove",
-  Quit = "quit"
-}
-
-type InquirerAnswers = {
-  action: Action
+  Quit = "quit",
+  Edit = "edit"
 }
 
 enum MessageVariant {
@@ -17,6 +14,12 @@ enum MessageVariant {
   Error,
   Info
 }
+
+type InquirerAnswers = {
+  action: Action
+}
+
+
 
 class Message {
   private content: string;
@@ -87,7 +90,36 @@ class UsersData {
     }
   }
 
+  public edit(name: string, noa: string , newValue:string | number): void {
+    const index = this.data.findIndex( user => user.name === name);
+    if (index !== -1){
+      if ( noa === 'name' && typeof newValue === 'string'){
+        this.data[index].name = newValue;
+        Message.showColorized(MessageVariant.Success,'Name changed');
+      } else if ( noa === 'age' && typeof newValue === 'number'){
+        this.data[index].age = newValue;
+        Message.showColorized(MessageVariant.Success,'Age changed');
+      }
+  
+    } else {
+      Message.showColorized(MessageVariant.Error, `User ${name} not found...`);
+    }
+  }
+
 }
+
+const users = new UsersData();
+console.log("\n");
+console.info("???? Welcome to the UsersApp!");
+console.log("====================================");
+Message.showColorized(MessageVariant.Info, "Available actions");
+console.log("\n");
+console.log("list – show all users");
+console.log("add – add new user to the list");
+console.log("remove – remove user from the list");
+console.log("edit – edit user name or age");
+console.log("quit – quit the app");
+console.log("\n");
 
 const startApp = () => {
   inquirer.prompt([{
@@ -97,29 +129,53 @@ const startApp = () => {
   }]).then(async (answers: InquirerAnswers) => {
     switch (answers.action){
       case Action.List:
-        console.log(answers.action);
+        users.showAll();
         break;
       case Action.Add:
-        console.log(answers.action);
+        const user = await inquirer.prompt([{
+          name: 'name',
+          type: 'input',
+          message: 'Enter name',
+        }, {
+          name: 'age',
+          type: 'number',
+          message: 'Enter age',
+        }]);
+        users.add(user);
         break;
       case Action.Remove:
-        console.log(answers.action);
+        const name = await inquirer.prompt([{
+          name: 'name',
+          type: 'input',
+          message: 'Enter name',
+        }]);
+        users.remove(name.name);
+        break;
+      case Action.Edit:
+        const editName = await inquirer.prompt([{
+          name: 'name',
+          type: 'input',
+          message: 'Enter name'
+        } , {
+          name: 'nameOrAge',
+          type: 'input',
+          message: 'What do you want to edit name or age?'
+        }, {
+          name: 'newValue',
+          type: 'input',
+          message: 'What is new value'
+        }]);
+        users.edit(editName.name, editName.nameOrAge, editName.newValue);
         break;
       case Action.Quit:
         Message.showColorized(MessageVariant.Info, "Bye Bye");
         return;
+      default:
+        Message.showColorized(MessageVariant.Error,"Command not found");
     }
     startApp();
   });
 }
 
-const users = new UsersData();
-users.showAll();
-users.add({ name: "Jan", age: 20 });
-users.add({ name: "Adam", age: 30 });
-users.add({ name: "Kasia", age: 23 });
-users.add({ name: "Basia", age: -6 });
-users.showAll();
-users.remove("Maurycy");
-users.remove("Adam");
-users.showAll();
+
+startApp();
